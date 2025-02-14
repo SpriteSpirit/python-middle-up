@@ -13,7 +13,6 @@ def search(number: id) -> bool:
 
     while left <= right:
         middle = (left + right) // 2
-        print(middle)
 
         if not sorted_list:
             return False
