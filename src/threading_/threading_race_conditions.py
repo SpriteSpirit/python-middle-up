@@ -3,6 +3,7 @@ import time
 
 counter = 0
 
+
 def increment():
     global counter
 
@@ -10,6 +11,7 @@ def increment():
         temp = counter
         time.sleep(0.000001)  # Искусственная задержка
         counter = temp + 1
+
 
 # создание 2х потоков
 thread1 = threading.Thread(target=increment)
@@ -29,4 +31,4 @@ thread2.join()
 thread3.join()
 thread4.join()
 
-print(f'Итоговое значение {counter=}')
+print(f"Итоговое значение {counter=}")

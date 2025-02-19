@@ -6,6 +6,7 @@ requires-python = ">=3.11"
 dependencies = [
     "aiohttp>=3.11.12",
     "asyncio>=3.4.3",
+    "ruff>=0.9.6",
 ]
 
 [tool.ruff.lint]

@@ -7,7 +7,7 @@
 """
 
 
-class SingletoneClass():
+class SingletoneClass:
     """
     Класс синглтона.
     """
@@ -28,5 +28,7 @@ alice = SingletoneClass("Alice")
 tedd = SingletoneClass("Tedd")
 
 print(bob is alice)  # Output: True - это один и тот же экземпляр
-print(bob.name)  # Output: Alice (значение изменилось, так как это тот же экземпляр и объект Alice был создан последним)
+print(
+    bob.name
+)  # Output: Alice (значение изменилось, так как это тот же экземпляр и объект Alice был создан последним)
 print(alice.name)  # Output: Alice

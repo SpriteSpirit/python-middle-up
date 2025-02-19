@@ -26,6 +26,7 @@ def search(number: id) -> bool:
 
     return False
 
+
 # Пример использования
 # print(search(356))  # Output: True
 # print(search(1000))  # Output: False

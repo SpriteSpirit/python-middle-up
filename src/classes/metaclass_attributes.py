@@ -21,7 +21,7 @@ class MetaClassCreatedAt(type):
         :return: Новый экземпляр класса.
         """
 
-        namespace['created_at'] = datetime.datetime.now()
+        namespace["created_at"] = datetime.datetime.now()
         return type.__new__(cls, name, bases, namespace)
 
 
@@ -31,6 +31,7 @@ class MetaClassAttributes(metaclass=MetaClassCreatedAt):
     """
 
     pass
+
 
 # Выводит текущее время создания класса
 print(MetaClassAttributes.created_at)

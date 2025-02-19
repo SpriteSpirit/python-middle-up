@@ -7,7 +7,7 @@
 """
 
 
-class SingletoneClass():
+class SingletoneClass:
     """
     Класс синглтона.
     """
