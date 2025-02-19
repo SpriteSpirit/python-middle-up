@@ -1,0 +1,6 @@
+{
+    "single_thread": 0.0039997100830078125,
+    "parallel_process_threads": 0.013007640838623047,
+    "parallel_process_pool": 0.3306581974029541,
+    "parallel_process_queue": 0.4420597553253174
+}
