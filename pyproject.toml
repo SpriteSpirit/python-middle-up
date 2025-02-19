@@ -3,7 +3,10 @@ name = "python-grade-up"
 version = "0.1.0"
 description = "Add your description here"
 requires-python = ">=3.11"
-dependencies = []
+dependencies = [
+    "aiohttp>=3.11.12",
+    "asyncio>=3.4.3",
+]
 
 [tool.ruff.lint]
 extend-select = ["I"]
