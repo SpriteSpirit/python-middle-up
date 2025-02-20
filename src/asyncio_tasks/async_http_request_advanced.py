@@ -21,76 +21,114 @@ from typing import Any
 
 import aiofiles
 import aiohttp
-
-from aiohttp import ClientSession
-from asyncio import Semaphore
+from aiohttp import ClientSession, ClientTimeout
 
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(message)s",
-    handlers=[logging.FileHandler("errors.log"), logging.StreamHandler()],
+    handlers=[logging.FileHandler("errors.log", encoding='utf-8'), logging.StreamHandler()],
 )
 
 
-async def process_url(url: str, session: ClientSession, semaphore: Semaphore, out_file: Any) -> None:
+async def process_url(
+    session: ClientSession, queue: asyncio.Queue, out_file: Any
+) -> None:
     """
     Асинхронно обрабатывает один URL, выполняя HTTP-запрос и записывая полученный JSON-ответ в файл в формате JSONL.
 
-    :param url: URL-адрес для выполнения запроса.
-    :param session: Объект `aiohttp.ClientSession` для осуществления HTTP-запросов.
-    :param semaphore: Объект `asyncio.Semaphore`, ограничивающий количество одновременных запросов.
+    :param session: Объект `aiohttp.ClientSession` для HTTP-запросов.
+    :param queue: Очередь (`asyncio.Queue`), из которой извлекаются URL для обработки.
     :param out_file: Асинхронный файловый объект для записи результатов в формате JSONL.
     """
 
-    async with semaphore:
-        try:
-            timeout = aiohttp.ClientTimeout(total=10)
+    try:
+        while True:
+            url = await queue.get()
 
-            async with session.get(url, timeout=timeout) as response:
-                if response.status == 200:
-                    content_type = response.headers.get("Content-Type", "")
+            try:
+                async with session.get(url, timeout=ClientTimeout(total=10)) as response:
 
-                    # Проверяем, что ответ действительно JSON
-                    if "application/json" not in content_type:
-                        logging.warning(f"Non-JSON response from {url}")
-                        return
+                    if response.status == 200:
+                        content_type = response.headers.get("Content-Type", "")
 
-                    try:
-                        content = await response.json()
-                        data = {"url": url, "content": content}
-                        line = json.dumps(data, ensure_ascii=False) + "\n"
-                        await out_file.write(line)
-                    except (aiohttp.ContentTypeError, json.JSONDecodeError) as e:
-                        logging.error(f"JSON parse error: {url} | {str(e)}")
-                else:
-                    logging.warning(f"Status {response.status} for {url}")
-        except (aiohttp.ClientError, asyncio.TimeoutError) as e:
-            logging.error(f"Connection error: {url} | {str(e)}")
+                        if "json" not in content_type.lower():
+                            logging.warning(f"Контент типа JSON отсутствует на {url}. Пропуск...")
+                            continue
+                        try:
+                            content = await response.json(content_type=None)
+                            await out_file.write(
+                                json.dumps(
+                                    {url: content}, ensure_ascii=False
+                                )
+                                + "\n"
+                            )
+                        except (aiohttp.ContentTypeError, json.JSONDecodeError) as e:
+                            logging.error(f"Ошибка парсинга JSON на {url}: {e}. Пропуск...")
+                    else:
+                        logging.warning(f"Получен статус-код {response.status} для URL: {url}. Пропуск...")
+            except (aiohttp.ClientError, asyncio.TimeoutError) as e:
+                logging.error(f"Ошибка соединения: {url}: {e}. Пропуск...")
+            finally:
+                queue.task_done()
+    except asyncio.CancelledError:
+        logging.info("Worker завершил работу")
 
 
-async def fetch_urls(input_file: str, output_file: str) -> None:
+async def url_producer(input_file: str, queue: asyncio.Queue):
+    """
+    Считывает url из файла построчно и помещает их в очередь.
+
+    :param input_file: Путь к текстовому файлу со списком URL-адресов (один URL на строку).
+    :param queue: Очередь для хранения URL-адресов.
+    """
+
+    async with aiofiles.open(input_file, "r") as file:
+        async for line in file:
+            url = line.strip()
+
+            if url and url.startswith(("http://", "https://")):
+                await queue.put(url)
+
+
+async def fetch_urls(
+    input_file: str, output_file: str, max_concurrent: int = 5
+) -> None:
     """
     Асинхронная функция для загрузки списка URL-адресов и сохранения результатов в формате JSONL.
 
     :param input_file: Путь к текстовому файлу со списком URL-адресов (один URL на строку).
     :param output_file: Путь к файлу для записи результатов (каждая строка в формате JSONL).
+    :param max_concurrent: Количество одновременных запросов
     """
 
-    with open(input_file, "r") as file:
-        urls = [line.strip() for line in file if line.strip()]
+    queue = asyncio.Queue(maxsize=1000)
+    timeout = 60
 
-    semaphore = asyncio.Semaphore(5)
+    async with (
+        aiohttp.ClientSession() as session,
+        aiofiles.open(output_file, "w") as out_file,
+    ):
+        producer_task = asyncio.create_task(url_producer(input_file, queue))
 
-    async with aiohttp.ClientSession() as session:
-        async with aiofiles.open(output_file, "w") as out_file:
-            tasks = []
+        workers = [
+            asyncio.create_task(process_url(session, queue, out_file))
+            for i in range(max_concurrent)
+        ]
 
-            for url in urls:
-                task = asyncio.create_task(
-                    process_url(url, session, semaphore, out_file)
-                )
-                tasks.append(task)
-            await asyncio.gather(*tasks)
+        try:
+            await producer_task
+        except Exception as e:
+            logging.error(f"Ошибка в producer: {e}")
+            raise
+        finally:
+            try:
+                await asyncio.wait_for(queue.join(), timeout=timeout)
+            except asyncio.TimeoutError:
+                logging.warning("Время ожидания завершения обработки очереди истекло. Таймаут: {timeout} сек.")
+
+            for worker in workers:
+                worker.cancel()
+            await asyncio.gather(*workers, return_exceptions=True)
 
 
 if __name__ == "__main__":
