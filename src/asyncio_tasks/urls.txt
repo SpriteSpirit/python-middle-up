@@ -1,0 +1,7 @@
+https://api.github.com/users/octocat
+https://httpbin.org/json
+https://api.exchangerate-api.com/v4/latest/USD
+https://httpstat.us/200
+https://example.com
+https://httpbin.org/status/404
+https://nonexistent.url
