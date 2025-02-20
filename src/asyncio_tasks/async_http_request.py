@@ -44,15 +44,10 @@ async def fetch_urls(urls: list[str], file_path: str):
         results = await asyncio.gather(*tasks)
 
         # Сохранение результатов в JSON-файл
-        with open(file_path, "w", encoding="utf-8") as file:
-            json.dump(
-                [
-                    {"url": url, "status_code": status_code}
-                    for url, status_code in results
-                ],
-                file,
-                indent=4,
-            )
+        with open(file_path, "w") as file:
+            for url, status_code in results:
+                json.dump({"url": url, "status_code": status_code}, file, indent=4)
+                file.write("\n")
 
 
 if __name__ == "__main__":
@@ -61,4 +56,4 @@ if __name__ == "__main__":
         "https://httpbin.org/status/404",
         "https://nonexistent.url",
     ]
-    asyncio.run(fetch_urls(urls, "./results.json"))
+    asyncio.run(fetch_urls(urls, "./results.jsonl"))
