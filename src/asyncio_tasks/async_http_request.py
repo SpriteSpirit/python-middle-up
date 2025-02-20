@@ -32,7 +32,9 @@ async def fetch_urls(urls: list[str], file_path: str):
 
             async with semaphore:
                 try:
-                    async with session.get(url, timeout=10) as response:
+                    timeout = aiohttp.ClientTimeout(total=10)
+
+                    async with session.get(url, timeout=timeout) as response:
                         return url, response.status
                 except (aiohttp.ClientError, asyncio.TimeoutError):
                     # Где 0 - ошибка запроса
