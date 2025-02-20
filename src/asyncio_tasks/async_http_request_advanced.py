@@ -17,9 +17,13 @@
 import asyncio
 import json
 import logging
+from typing import Any
 
 import aiofiles
 import aiohttp
+
+from aiohttp import ClientSession
+from asyncio import Semaphore
 
 logging.basicConfig(
     level=logging.INFO,
@@ -28,9 +32,7 @@ logging.basicConfig(
 )
 
 
-async def process_url(
-    url: str, session: aiohttp.ClientSession, semaphore: asyncio.Semaphore, out_file
-) -> None:
+async def process_url(url: str, session: ClientSession, semaphore: Semaphore, out_file: Any) -> None:
     """
     Асинхронно обрабатывает один URL, выполняя HTTP-запрос и записывая полученный JSON-ответ в файл в формате JSONL.
 
@@ -42,7 +44,9 @@ async def process_url(
 
     async with semaphore:
         try:
-            async with session.get(url, timeout=10) as response:
+            timeout = aiohttp.ClientTimeout(total=10)
+
+            async with session.get(url, timeout=timeout) as response:
                 if response.status == 200:
                     content_type = response.headers.get("Content-Type", "")
 
