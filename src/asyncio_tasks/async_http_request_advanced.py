@@ -26,7 +26,10 @@ from aiohttp import ClientSession, ClientTimeout
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(message)s",
-    handlers=[logging.FileHandler("errors.log", encoding='utf-8'), logging.StreamHandler()],
+    handlers=[
+        logging.FileHandler("errors.log", encoding="utf-8"),
+        logging.StreamHandler(),
+    ],
 )
 
 
@@ -46,26 +49,30 @@ async def process_url(
             url = await queue.get()
 
             try:
-                async with session.get(url, timeout=ClientTimeout(total=10)) as response:
-
+                async with session.get(
+                    url, timeout=ClientTimeout(total=10)
+                ) as response:
                     if response.status == 200:
                         content_type = response.headers.get("Content-Type", "")
 
                         if "json" not in content_type.lower():
-                            logging.warning(f"Контент типа JSON отсутствует на {url}. Пропуск...")
+                            logging.warning(
+                                f"Контент типа JSON отсутствует на {url}. Пропуск..."
+                            )
                             continue
                         try:
                             content = await response.json(content_type=None)
                             await out_file.write(
-                                json.dumps(
-                                    {url: content}, ensure_ascii=False
-                                )
-                                + "\n"
+                                json.dumps({url: content}, ensure_ascii=False) + "\n"
                             )
                         except (aiohttp.ContentTypeError, json.JSONDecodeError) as e:
-                            logging.error(f"Ошибка парсинга JSON на {url}: {e}. Пропуск...")
+                            logging.error(
+                                f"Ошибка парсинга JSON на {url}: {e}. Пропуск..."
+                            )
                     else:
-                        logging.warning(f"Получен статус-код {response.status} для URL: {url}. Пропуск...")
+                        logging.warning(
+                            f"Получен статус-код {response.status} для URL: {url}. Пропуск..."
+                        )
             except (aiohttp.ClientError, asyncio.TimeoutError) as e:
                 logging.error(f"Ошибка соединения: {url}: {e}. Пропуск...")
             finally:
@@ -124,7 +131,9 @@ async def fetch_urls(
             try:
                 await asyncio.wait_for(queue.join(), timeout=timeout)
             except asyncio.TimeoutError:
-                logging.warning("Время ожидания завершения обработки очереди истекло. Таймаут: {timeout} сек.")
+                logging.warning(
+                    "Время ожидания завершения обработки очереди истекло. Таймаут: {timeout} сек."
+                )
 
             for worker in workers:
                 worker.cancel()
