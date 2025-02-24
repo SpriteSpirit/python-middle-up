@@ -1,3 +1,4 @@
+# --------------- Задачи 1-20 --------------- #
 import asyncio
 import time
 
@@ -79,7 +80,7 @@ async def wait_for_seconds(seconds: int) -> None:
     Асинхронная функция, которая делает задержку на указанное число секунд.
     """
     await asyncio.sleep(seconds)
-    print(f"Time elapsed: {seconds} seconds")
+    print(f"Прошло {seconds} с.")
 
 
 async def measure_time() -> None:
@@ -89,7 +90,7 @@ async def measure_time() -> None:
     start_time = time.time()
     await asyncio.gather(wait_for_seconds(2), wait_for_seconds(2))
     end_time = time.time()
-    print(f"Execution time: {round(end_time - start_time, 2)} seconds")
+    print(f"Время исполнения: {round(end_time - start_time, 2)} с.")
 
 
 # 7. Асинхронное ожидание с timeout
@@ -98,7 +99,7 @@ async def long_time_task(seconds: int) -> None:
     Асинхронная функция, которая выполняет долгую задачу.
     """
     await asyncio.sleep(seconds)
-    print(f"Long task completed after {seconds} seconds")
+    print(f"Продолжительная задача длиной {seconds} с.")
 
 
 async def timeout_task(timeout: int) -> None:
@@ -109,7 +110,7 @@ async def timeout_task(timeout: int) -> None:
     try:
         await asyncio.wait_for(long_time_task(3), timeout=timeout)
     except asyncio.TimeoutError:
-        print(f"Task timed out in {timeout} seconds")
+        print(f"Время выполнения задачи превысило {timeout} с.")
 
 
 # 8. Простая очередь с задачами
@@ -160,28 +161,28 @@ async def manual_create_task() -> None:
 
 # 10. Отмена задачи
 async def worker() -> None:
-    print("Worker started")
+    print("Worker запустился")
     await asyncio.sleep(5)
-    print("Worker done")
+    print("Worker отработал")
 
 
 async def canceled_task() -> None:
     task = asyncio.create_task(worker())
     await asyncio.sleep(1)
     task.cancel()
-    print("Task canceled")
+    print("Задача отменена")
 
     # Подтверждение завершения задачи
     try:
         await task
     except asyncio.CancelledError:
-        print("Task was cancelled")
+        print("Задача была отменена")
 
 
 # 11. Параллельная обработка списка
 async def process_number(number: float) -> None:
     await asyncio.sleep(1)
-    print(f"Number: {number}")
+    print(f"Число: {number}")
 
 
 async def print_numbers() -> None:
@@ -195,7 +196,7 @@ async def print_numbers() -> None:
 async def some_task(active_task: int, semaphore: asyncio.Semaphore) -> None:
     async with semaphore:
         await asyncio.sleep(1)
-        print(f"Task {active_task} done")
+        print(f"Задача {active_task} завершена")
 
 
 async def limited_task(limit: int = 5) -> None:
@@ -208,15 +209,15 @@ async def limited_task(limit: int = 5) -> None:
 # 13. Обработка исключений
 async def throw_exception() -> None:
     await asyncio.sleep(1)
-    raise ValueError("Something went wrong...")
+    raise ValueError("Что-то пошло не так")
 
 
 async def handle_exception() -> None:
     try:
         await throw_exception()
-        print("Task completed without error")
+        print("Задача завершена без ошибок")
     except ValueError as e:
-        print(f"An error occurred: {e}")
+        print(f"Произошла ошибка: {e}")
 
 
 # 14. Очередь с несколькими воркерами
@@ -224,7 +225,7 @@ async def worker(queue: asyncio.Queue) -> None:
     while not queue.empty():
         number = await queue.get()
         await asyncio.sleep(1)
-        print(f"Worker processed number: {number}")
+        print(f"Worker обработал число: {number}")
         queue.task_done()
 
 
@@ -249,7 +250,7 @@ async def process_file(file_path: str) -> None:
 # 16. Параллельные запросы с задержкой
 async def fake_requests(delay: int) -> None:
     await asyncio.sleep(delay)
-    print(f"Fake request completed after {delay} seconds.")
+    print(f"Запрос после {delay} секунд")
 
 
 async def process_requests() -> None:
@@ -259,7 +260,7 @@ async def process_requests() -> None:
 # 17. Ожидание первой завершившейся задачи
 async def some_task(delay: int) -> str:
     await asyncio.sleep(delay)
-    return f"Task with delay {delay}"
+    return f"Задача с задержкой {delay} с."
 
 
 async def wait_first_completed_task(task_count: int = 3) -> None:
@@ -291,8 +292,8 @@ async def new_task(
         exception_task = 2
 
         if exception_task == task_number:
-            raise ValueError(f"Error in task {task_number} ")
-        print(f"Task {task_number} completed successfully")
+            raise ValueError(f"Ошибка в задаче {task_number} ")
+        print(f"Задача {task_number} успешно завершена")
 
 
 async def semaphore_with_exception(task_count: int) -> None:
@@ -302,7 +303,7 @@ async def semaphore_with_exception(task_count: int) -> None:
 
     for result in results:
         if isinstance(result, Exception):
-            print(f"An error occurred: {result}")
+            print(f"Произошла ошибка: {result}")
 
 # 20. Асинхронный генератор
 async def async_generator() -> int:
@@ -312,7 +313,7 @@ async def async_generator() -> int:
 
 async def print_gen() -> None:
     async for i in async_generator():
-        print(f'Number: {i}')
+        print(f'Число: {i}')
 
 
 if __name__ == "__main__":
