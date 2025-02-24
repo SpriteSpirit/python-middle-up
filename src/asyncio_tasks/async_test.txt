@@ -1,0 +1,5 @@
+The first of the principles SOLID
+Pertains to the roles of the objects
+Perform only one task
+Every method, test, class
+To help readers get your code’s logics
