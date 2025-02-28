@@ -114,7 +114,7 @@ async def timeout_task(timeout: int) -> None:
 
 
 # 8. Простая очередь с задачами
-async def worker(queue: asyncio.Queue) -> None:
+async def worker_queue(queue: asyncio.Queue) -> None:
     while True:
         msg = await queue.get()
 
@@ -129,7 +129,7 @@ async def print_msg_with_queue(max_workers: int) -> None:
     queue = asyncio.Queue()
     await queue.put("Hello")
     await queue.put("world!")
-    workers = [asyncio.create_task(worker(queue)) for _ in range(max_workers)]
+    workers = [asyncio.create_task(worker_queue(queue)) for _ in range(max_workers)]
 
     for _ in range(max_workers):
         await queue.put(None)
@@ -160,14 +160,14 @@ async def manual_create_task() -> None:
 
 
 # 10. Отмена задачи
-async def worker() -> None:
+async def worker_canceled() -> None:
     print("Worker запустился")
     await asyncio.sleep(5)
     print("Worker отработал")
 
 
 async def canceled_task() -> None:
-    task = asyncio.create_task(worker())
+    task = asyncio.create_task(worker_canceled())
     await asyncio.sleep(1)
     task.cancel()
     print("Задача отменена")
@@ -221,7 +221,7 @@ async def handle_exception() -> None:
 
 
 # 14. Очередь с несколькими воркерами
-async def worker(queue: asyncio.Queue) -> None:
+async def worker_number(queue: asyncio.Queue) -> None:
     while not queue.empty():
         number = await queue.get()
         await asyncio.sleep(1)
@@ -229,13 +229,13 @@ async def worker(queue: asyncio.Queue) -> None:
         queue.task_done()
 
 
-async def process_number(count_number: int = 3) -> None:
+async def process_queue_number(count_number: int = 3) -> None:
     queue = asyncio.Queue()
 
     for i in range(count_number):
         await queue.put(i)
 
-    await asyncio.gather(worker(queue), worker(queue))
+    await asyncio.gather(worker_number(queue), worker_number(queue))
     await queue.join()
 
 
@@ -258,13 +258,13 @@ async def process_requests() -> None:
 
 
 # 17. Ожидание первой завершившейся задачи
-async def some_task(delay: int) -> str:
+async def delay_task(delay: int) -> str:
     await asyncio.sleep(delay)
     return f"Задача с задержкой {delay} с."
 
 
 async def wait_first_completed_task(task_count: int = 3) -> None:
-    tasks = [asyncio.create_task(some_task(i)) for i in range(1, task_count + 1)]
+    tasks = [asyncio.create_task(delay_task(i)) for i in range(1, task_count + 1)]
     done, pending = await asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED)
 
     for task in done:
@@ -305,37 +305,39 @@ async def semaphore_with_exception(task_count: int) -> None:
         if isinstance(result, Exception):
             print(f"Произошла ошибка: {result}")
 
+
 # 20. Асинхронный генератор
 async def async_generator() -> int:
     for i in range(1, 4):
         await asyncio.sleep(1)
         yield i
 
+
 async def print_gen() -> None:
     async for i in async_generator():
-        print(f'Число: {i}')
+        print(f"Число: {i}")
 
 
 if __name__ == "__main__":
-    # asyncio.run(print_message('Hello, asyncio!'))
-    # asyncio.run(print_msg_in_row())
-    # asyncio.run(print_msg_parallel())
-    # asyncio.run(greeting('Alice', 'Bob', 'Charlie'))
-    # asyncio.run(repeat(3))
-    # asyncio.run(measure_time())
-    # asyncio.run(timeout_task(1))
-    # asyncio.run(print_msg_with_queue(12))
-    # asyncio.run(manual_create_task())
-    # asyncio.run(print_some_msg('Hello!'))
-    # asyncio.run(canceled_task())
-    # asyncio.run(print_numbers())
-    # asyncio.run(limited_task())
-    # asyncio.run(handle_exception())
-    # asyncio.run(process_number())
-    # asyncio.run(process_file('async_test.txt'))
-    # asyncio.run(process_requests())
-    # asyncio.run(wait_first_completed_task())
-    # asyncio.run(even_numbers([1, 2]))
-    # asyncio.run(even_numbers([1, 2]))
-    # asyncio.run(semaphore_with_exception(5))
+    asyncio.run(print_message("Hello, asyncio!"))
+    asyncio.run(print_msg_in_row())
+    asyncio.run(print_msg_parallel())
+    asyncio.run(greeting("Alice", "Bob", "Charlie"))
+    asyncio.run(repeat(3))
+    asyncio.run(measure_time())
+    asyncio.run(timeout_task(1))
+    asyncio.run(print_msg_with_queue(12))
+    asyncio.run(manual_create_task())
+    asyncio.run(print_some_msg("Hello!"))
+    asyncio.run(canceled_task())
+    asyncio.run(print_numbers())
+    asyncio.run(limited_task())
+    asyncio.run(handle_exception())
+    asyncio.run(process_queue_number())
+    asyncio.run(process_file("async_test.txt"))
+    asyncio.run(process_requests())
+    asyncio.run(wait_first_completed_task())
+    asyncio.run(even_numbers([1, 2]))
+    asyncio.run(even_numbers([1, 2]))
+    asyncio.run(semaphore_with_exception(5))
     asyncio.run(print_gen())
