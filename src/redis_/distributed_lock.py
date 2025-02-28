@@ -26,11 +26,11 @@ def single(max_processing_time: datetime.timedelta):
             lock_key = f"lock:{func.__name__}"
 
             # Проверка наличия блокировки
-            acquired  = redis_client.set(
+            acquired = redis_client.set(
                 lock_key, lock_id, nx=True, ex=int(max_processing_time.total_seconds())
             )
 
-            if not acquired :
+            if not acquired:
                 raise Exception("Функция уже выполняется или занята другим процессом")
 
             try:
@@ -57,7 +57,8 @@ def process_transaction(thread_id: int) -> None:
     time.sleep(2)
     print(f"Поток {thread_id}: Транзакция завершена.")
 
-def run_transaction(thread_id: int):
+
+def run_transaction(thread_id: int) -> None:
     """
     Запуск транзакции в отдельном потоке.
 
