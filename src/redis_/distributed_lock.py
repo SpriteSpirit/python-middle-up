@@ -2,7 +2,6 @@ import datetime
 import functools
 import threading
 import time
-import uuid
 
 import redis
 
@@ -15,6 +14,9 @@ def single(max_processing_time: datetime.timedelta):
     Декоратор, который гарантирует, что функция не выполняется параллельно.
     При параллельном вызове функции, она будет ожидать, пока текущая инстанция функции завершит свою работу.
 
+    Метод lock.release использует Lua-скрипт внутри, который атомарно проверяет и удаляет ключ блокировки.
+    Это гарантирует, что только тот клиент, который захватил блокировку, может её освободить.
+
     :param max_processing_time: Максимальное время выполнения функции.
     """
 
@@ -22,23 +24,18 @@ def single(max_processing_time: datetime.timedelta):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
             # Создание уникального идентификатора блокировки и ключа для блокировки
-            lock_id = str(uuid.uuid4())
-            lock_key = f"lock:{func.__name__}"
+            lock_name = f"lock:{func.__name__}"
+            lock = redis_client.lock(lock_name, timeout=int(max_processing_time.total_seconds()))
 
-            # Проверка наличия блокировки
-            acquired = redis_client.set(
-                lock_key, lock_id, nx=True, ex=int(max_processing_time.total_seconds())
-            )
-
-            if not acquired:
+            # Проверка блокировки
+            if not lock.acquire(blocking=False):
                 raise Exception("Функция уже выполняется или занята другим процессом")
 
             try:
                 return func(*args, **kwargs)
             finally:
                 # Освобождение блокировки
-                if redis_client.get(lock_key) == lock_id.encode():
-                    redis_client.delete(lock_key)
+                lock.release()
 
         return wrapper
 
