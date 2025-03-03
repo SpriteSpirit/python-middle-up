@@ -25,7 +25,9 @@ def single(max_processing_time: datetime.timedelta):
         def wrapper(*args, **kwargs):
             # Создание уникального идентификатора блокировки и ключа для блокировки
             lock_name = f"lock:{func.__name__}"
-            lock = redis_client.lock(lock_name, timeout=int(max_processing_time.total_seconds()))
+            lock = redis_client.lock(
+                lock_name, timeout=int(max_processing_time.total_seconds())
+            )
 
             # Проверка блокировки
             if not lock.acquire(blocking=False):
